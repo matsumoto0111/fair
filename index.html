@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ほいコレ就職フェア | ぴったり園診断</title>
+    <title>ほいコレ就職フェア | ぴったり園診断（スプレッドシート連動Ver）</title>
     <style>
         :root {
             --primary-color: #ff9a9e;
@@ -32,7 +32,6 @@
             box-sizing: border-box;
             position: relative;
         }
-        /* ロゴ周りのスタイリング */
         .logo-area {
             text-align: center;
             margin-bottom: 10px;
@@ -44,7 +43,7 @@
             cursor: default;
             user-select: none;
             -webkit-user-select: none;
-            touch-action: manipulation; /* iOSのダブルタップズーム防止 */
+            touch-action: manipulation;
         }
         h2 {
             text-align: center;
@@ -73,7 +72,7 @@
             padding: 12px;
             border: 2px solid #f0f0f0;
             border-radius: 10px;
-            font-size: 15px;
+            font-size: 14px;
             color: var(--text-color);
             outline: none;
             transition: border-color 0.3s;
@@ -109,7 +108,6 @@
             display: none;
             white-space: pre-wrap;
         }
-        /* 完全に隠された管理者パネル */
         .admin-section {
             margin-top: 30px;
             border-top: 2px dashed #eee;
@@ -138,6 +136,12 @@
             border-radius: 4px;
             text-align: center;
         }
+        .loading-text {
+            text-align: center;
+            color: #777;
+            font-size: 12px;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -147,19 +151,34 @@
         <img src="logo.png" alt="ほいコレ就職フェア" class="logo-img" onclick="countTap()">
     </div>
     <h2>ぴったり園診断</h2>
-    <div class="subtitle">堺泉州エリア / 27卒学生向け</div>
+    <div class="subtitle">大阪市エリア / 27卒学生向け</div>
+    <div id="loading-status" class="loading-text">データ読み込み中...</div>
 
     <div class="question-block">
         <label>① 希望エリアは？</label>
         <select id="area">
-            <option value="堺市">堺市エリア</option>
-            <option value="泉州">泉州エリア</option>
-            <option value="こだわらない">こだわらない（どちらでもOK！）</option>
+            <option value="北部">北部（北・都島・福島・此花・西淀川・淀川・東淀川区）</option>
+            <option value="中央・西部">中央・西部（中央・西・港・大正・浪速区）</option>
+            <option value="東部">東部（城東・鶴見・旭・東成・生野区）</option>
+            <option value="南部">南部（天王寺・阿倍野・住之江・住吉・東住吉・平野・西成区）</option>
+            <option value="こだわらない">こだわらない（大阪市内どこでもOK！）</option>
         </select>
     </div>
 
     <div class="question-block">
-        <label>② どんなタイプの園がいい？</label>
+        <label>② 通いやすい沿線は？</label>
+        <select id="line">
+            <option value="御堂筋線">Osaka Metro 御堂筋線</option>
+            <option value="谷町線・四つ橋線・堺筋線">Osaka Metro 谷町線・四つ橋線・堺筋線</option>
+            <option value="中央線・長堀鶴見緑地線">Osaka Metro 中央線・長堀鶴見緑地線</option>
+            <option value="JR大阪環状線">JR 大阪環状線・その他JR線</option>
+            <option value="私鉄各線">私鉄各線（阪急・阪神・京阪・近鉄・南海）</option>
+            <option value="こだわらない">こだわらない（どの沿線でもOK！）</option>
+        </select>
+    </div>
+
+    <div class="question-block">
+        <label>③ どんなタイプの園がいい？</label>
         <select id="type">
             <option value="のびのび">のびのび系（元気に遊びたい）</option>
             <option value="お勉強">お勉強・教育系（学びもしっかり）</option>
@@ -168,7 +187,7 @@
     </div>
 
     <div class="question-block">
-        <label>③ 一番重視することは？</label>
+        <label>④ 一番重視することは？</label>
         <select id="priority">
             <option value="人間関係">人間関係・職場の雰囲気</option>
             <option value="お休み">お休み・プライベートの充実</option>
@@ -189,44 +208,58 @@
 </div>
 
 <script>
-const booths = [
-    { no: 1, name: "西保育園", area: "堺市", type: "のびのび", priority: "人間関係", desc: "アットホームな環境で先輩たちのフォローが手厚く、人間関係の良さが自慢の園です！" },
-    { no: 2, name: "アトム共同保育園", area: "堺市", type: "小規模", priority: "人間関係", desc: "地域密層で子どもたち一人ひとりに寄り添い、笑顔があふれる温かい職場環境です。" },
-    { no: 3, name: "認定こども園 ひばり幼稚園", area: "堺市", type: "お勉強", priority: "研修", desc: "独自のカリキュラムが充実しており、新卒向けの研修制度もばっちり整っています！" },
-    { no: 4, name: "陶器北こども園", area: "堺市", type: "のびのび", priority: "お休み", desc: "広い園庭で子どもたちがのびのび育ち、ワークライフバランス重視でお休みもしっかり取れます。" },
-    { no: 5, name: "幼保連携型認定こども園 東百舌鳥保育園", area: "堺市", type: "のびのび", priority: "研修", desc: "元気いっぱいの保育が特徴！サポート体制が手厚く、一歩ずつ保育士として成長できます。" },
-    { no: 6, name: "認定こども園 鈴ノ宮保育園", area: "堺市", type: "お勉強", priority: "人間関係", desc: "日本の伝統や学びを大切にする園。職員同士のチームワークが良く、何でも相談しやすい雰囲気です。" },
-    { no: 7, name: "まつのみこども園", area: "堺市", type: "小規模", priority: "お休み", desc: "プライベートの時間も大切にできる環境で、ゆとりを持って子どもたちと向き合えます。" },
-    { no: 8, name: "幼保連携型認定こども園 菩提幼稚園", area: "堺市", type: "お勉強", priority: "お休み", desc: "メリハリのある教育環境が魅力で、年間休日が多くしっかりとリフレッシュできる職場です。" },
-    { no: 9, name: "幼保連携型認定こども園 わんぱく保育園", area: "堺市", type: "のびのび", priority: "人間関係", desc: "名前の通りわんぱくに遊ぶ園！明るく気さくな先生ばかりで、すぐに馴染めますよ。" },
-    { no: 10, name: "幼保連携型認定こども園 あかつき保育園", area: "堺市", type: "のびのび", priority: "研修", desc: "豊かな自然に囲まれた園。新卒向けの丁寧なOJTがあり、安心して現場デビューできます。" },
-    { no: 11, name: "認定こども園 せいこう幼稚園", area: "堺市", type: "お勉強", priority: "研修", desc: "知育・体育に力を入れる活気ある園！スキルアップのための研修やカリキュラムが満載です。" },
-    { no: 12, name: "おおとりの森こども園", area: "堺市", type: "小規模", priority: "人間関係", desc: "木の温もりに包まれた園舎で、お互いを思いやる最高の人間関係が築かれています。" },
-    { no: 13, name: "信達こども園", area: "泉州", type: "のびのび", priority: "人間関係", desc: "泉州の豊かな環境のなか、のびのび保育を実践！先生たちの仲の良さも抜群です。" },
-    { no: 14, name: "なかもずこども園", area: "堺市", type: "小規模", priority: "研修", desc: "少人数ならではの手厚い保育。園内研修が充実しており、じっくり保育を学びたい方に最適です。" },
-    { no: 15, name: "幼保連携型認定こども園 堺めぐみ学園", area: "堺市", type: "お勉強", priority: "人間関係", desc: "幼児教育に定評あり！先輩たちが優しく教えてくれるので、安心して挑戦できる環境です。" },
-    { no: 16, name: "サン子ども園", area: "泉州", type: "のびのび", priority: "お休み", desc: "太陽のように明るい園。持ち帰り残業ゼロを掲げ、プライベートも100%楽しめます！" },
-    { no: 17, name: "幼稚園型認定こども園 新ひのお台幼稚園", area: "堺市", type: "お勉強", priority: "お休み", desc: "充実した教育環境と、お休みがしっかり取れる好待遇が両立している大人気の園です。" },
-    { no: 18, name: "取石南こども園", area: "泉州", type: "小規模", priority: "お休み", desc: "アットホームな小規模保育でお休みも取りやすく、長く働き続けられる環境が整っています。" }
-];
+// ⚠️ 【重要】ここにGASで作成した「ウェブアプリのURL」を貼り付けてください
+const GAS_API_URL = "ここにGASのウェブアプリURLを貼り付け";
 
+let booths = [];
 let seatCounts = {};
-booths.forEach(b => { seatCounts[b.no] = 0; });
 let lastSelectedNo = null;
 
-const grid = document.getElementById('admin-grid');
-booths.forEach(b => {
-    grid.innerHTML += `
-        <div>【ブース${b.no}】 ${b.name}</div>
-        <div><input type="number" id="seat-${b.no}" value="0" min="0" onchange="updateSeat(${b.no}, this.value)"> 人</div>
-    `;
+// 起動時にスプレッドシートから園のデータを取得する
+window.addEventListener('DOMContentLoaded', () => {
+    if(GAS_API_URL.includes("ここにGAS")) {
+        document.getElementById('loading-status').innerText = "⚠️ API URLが設定されていません。";
+        return;
+    }
+    
+    fetch(GAS_API_URL)
+        .then(response => response.json())
+        .then(data => {
+            booths = data;
+            // 着座データの初期化と管理パネルの生成
+            const grid = document.getElementById('admin-grid');
+            grid.innerHTML = "";
+            booths.forEach(b => {
+                seatCounts[b.no] = b.seats;
+                grid.innerHTML += `
+                    <div>【ブース${b.no}】 ${b.name} (${b.area})</div>
+                    <div><input type="number" id="seat-${b.no}" value="${b.seats}" min="0" onchange="updateSeat(${b.no}, this.value)"> 人</div>
+                `;
+            });
+            document.getElementById('loading-status').style.display = 'none';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('loading-status').innerText = "データ読み込み失敗。通信環境を確認してください。";
+        });
 });
 
+// 着座数を変更した際、リアルタイムでスプレッドシートへ送信する
 function updateSeat(no, val) {
-    seatCounts[no] = parseInt(val) || 0;
+    const intVal = parseInt(val) || 0;
+    seatCounts[no] = intVal;
+    
+    // バックグラウンドでスプレッドシートに非同期送信
+    fetch(GAS_API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ no: no, seats: intVal })
+    }).catch(err => console.error("送信失敗:", err));
 }
 
-// 🤫 隠しコマンド処理（ロゴ画像を3回連続タップで出現/消滅）
 let tapCount = 0;
 let tapTimeout;
 function countTap() {
@@ -247,14 +280,29 @@ function countTap() {
 }
 
 function runDiagnosis() {
+    if (booths.length === 0) {
+        alert("データ読み込み中です。少々お待ちください。");
+        return;
+    }
+
     const selectedArea = document.getElementById('area').value;
+    const selectedLine = document.getElementById('line').value;
     const selectedType = document.getElementById('type').value;
     const selectedPriority = document.getElementById('priority').value;
 
     let filtered = booths.filter(b => {
         const areaMatch = (selectedArea === "こだわらない" || b.area === selectedArea);
-        return areaMatch && (b.type === selectedType) && (b.priority === selectedPriority);
+        const lineMatch = (selectedLine === "こだわらない" || b.line === selectedLine);
+        return areaMatch && lineMatch && (b.type === selectedType) && (b.priority === selectedPriority);
     });
+
+    if (filtered.length === 0) {
+        filtered = booths.filter(b => {
+            const areaMatch = (selectedArea === "こだわらない" || b.area === selectedArea);
+            const lineMatch = (selectedLine === "こだわらない" || b.line === selectedLine);
+            return areaMatch && lineMatch;
+        });
+    }
 
     if (filtered.length === 0) {
         filtered = booths.filter(b => selectedArea === "こだわらない" || b.area === selectedArea);
@@ -282,7 +330,7 @@ function runDiagnosis() {
 【ブース No.${finalSelection.no}】 ${finalSelection.name}
 -----------------------------------------
 🌟 **オススメの理由：**
-${selectedArea !== "こだわらない" ? `${selectedArea}エリアで、` : ''}あなたが希望された「${selectedType}系」の保育と、「${selectedPriority}」を大切にできる環境がバッチリ揃っています！${finalSelection.desc}
+${selectedArea !== "こだわらない" ? `大阪市${selectedArea}エリア・` : ''}${selectedLine !== "こだわらない" ? `${selectedLine}沿線で、` : ''}あなたが希望された「${selectedType}系」の保育と、「${selectedPriority}」を大切にできる環境がバッチリ揃っています！${finalSelection.desc}
 
 👉 **学生さんへ：**
 「ぜひブースに行ってみて、戻ってきたら感想を教えてね♪」`;
