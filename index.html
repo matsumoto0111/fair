@@ -32,17 +32,26 @@
             box-sizing: border-box;
             position: relative;
         }
-        h1 {
+        /* ロゴ周りのスタイリング */
+        .logo-area {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .logo-img {
+            max-width: 80%;
+            height: auto;
+            display: inline-block;
+            cursor: default;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation; /* iOSのダブルタップズーム防止 */
+        }
+        h2 {
             text-align: center;
             color: var(--accent-color);
-            font-size: 24px;
-            margin-bottom: 10px;
-            user-select: none;
-        }
-        /* 隠しスイッチ用スタイリング */
-        .secret-trigger {
-            cursor: default;
-            display: inline-block;
+            font-size: 22px;
+            margin-top: 5px;
+            margin-bottom: 5px;
         }
         .subtitle {
             text-align: center;
@@ -98,13 +107,14 @@
             background-color: #fff0f2;
             border: 2px dashed var(--accent-color);
             display: none;
+            white-space: pre-wrap;
         }
         /* 完全に隠された管理者パネル */
         .admin-section {
             margin-top: 30px;
             border-top: 2px dashed #eee;
             padding-top: 15px;
-            display: none; /* 初期状態は非表示 */
+            display: none;
         }
         .admin-panel {
             max-height: 250px;
@@ -133,11 +143,12 @@
 <body>
 
 <div class="container">
-    <!-- タイマの星マークが隠しスイッチになります -->
-    <h1>ほいコレ就職フェア<br><span class="secret-trigger" onclick="countTap()">🌟</span> ぴったり園診断 <span class="secret-trigger" onclick="countTap()">🌟</span></h1>
+    <div class="logo-area">
+        <img src="logo.png" alt="ほいコレ就職フェア" class="logo-img" onclick="countTap()">
+    </div>
+    <h2>ぴったり園診断</h2>
     <div class="subtitle">堺泉州エリア / 27卒学生向け</div>
 
-    <!-- 質問フォーム -->
     <div class="question-block">
         <label>① 希望エリアは？</label>
         <select id="area">
@@ -167,10 +178,8 @@
 
     <button class="diagnose-btn" onclick="runDiagnosis()">あなたにぴったりの園を見つける！</button>
 
-    <!-- 出力フォーマットエリア -->
     <div id="result-area"></div>
 
-    <!-- 隠し設定パネル（通常は見えません） -->
     <div class="admin-section" id="admin-section">
         <div class="admin-panel">
             <p style="margin:0 0 10px 0; font-weight:bold; color:#2f3542; font-size:13px;">📊 数値設定（スタッフ用）</p>
@@ -182,7 +191,7 @@
 <script>
 const booths = [
     { no: 1, name: "西保育園", area: "堺市", type: "のびのび", priority: "人間関係", desc: "アットホームな環境で先輩たちのフォローが手厚く、人間関係の良さが自慢の園です！" },
-    { no: 2, name: "アトム共同保育園", area: "堺市", type: "小規模", priority: "人間関係", desc: "地域密着で子どもたち一人ひとりに寄り添い、笑顔があふれる温かい職場環境です。" },
+    { no: 2, name: "アトム共同保育園", area: "堺市", type: "小規模", priority: "人間関係", desc: "地域密層で子どもたち一人ひとりに寄り添い、笑顔があふれる温かい職場環境です。" },
     { no: 3, name: "認定こども園 ひばり幼稚園", area: "堺市", type: "お勉強", priority: "研修", desc: "独自のカリキュラムが充実しており、新卒向けの研修制度もばっちり整っています！" },
     { no: 4, name: "陶器北こども園", area: "堺市", type: "のびのび", priority: "お休み", desc: "広い園庭で子どもたちがのびのび育ち、ワークライフバランス重視でお休みもしっかり取れます。" },
     { no: 5, name: "幼保連携型認定こども園 東百舌鳥保育園", area: "堺市", type: "のびのび", priority: "研修", desc: "元気いっぱいの保育が特徴！サポート体制が手厚く、一歩ずつ保育士として成長できます。" },
@@ -205,7 +214,6 @@ let seatCounts = {};
 booths.forEach(b => { seatCounts[b.no] = 0; });
 let lastSelectedNo = null;
 
-// パネル生成
 const grid = document.getElementById('admin-grid');
 booths.forEach(b => {
     grid.innerHTML += `
@@ -218,15 +226,13 @@ function updateSeat(no, val) {
     seatCounts[no] = parseInt(val) || 0;
 }
 
-// 🤫 隠しコマンド処理（3回タップで出現/消滅）
+// 🤫 隠しコマンド処理（ロゴ画像を3回連続タップで出現/消滅）
 let tapCount = 0;
 let tapTimeout;
 function countTap() {
     tapCount++;
     clearTimeout(tapTimeout);
-    
-    // 1秒間タップが途切れたらカウントリセット
-    tapTimeout = setTimeout(() => { tapCount = 0; }, 1000);
+    tapTimeout = setTimeout(() => { tapCount = 0; }, 800);
     
     if (tapCount === 3) {
         const section = document.getElementById('admin-section');
@@ -240,7 +246,6 @@ function countTap() {
     }
 }
 
-// 診断ロジック
 function runDiagnosis() {
     const selectedArea = document.getElementById('area').value;
     const selectedType = document.getElementById('type').value;
@@ -272,19 +277,15 @@ function runDiagnosis() {
 
     const resultArea = document.getElementById('result-area');
     resultArea.style.display = 'block';
-    resultArea.innerHTML = `
-        <h3 style="text-align:center; margin-top:0; color:var(--accent-color);">🎯 あなたと相性のいい園はこちら！</h3>
-        <hr style="border: 1px solid var(--accent-color); margin: 15px 0;">
-        <div style="font-size: 18px; font-weight: bold; text-align: center; margin: 15px 0; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-            【ブース No.${finalSelection.no}】<br>${finalSelection.name}
-        </div>
-        <hr style="border: 1px solid var(--accent-color); margin: 15px 0;">
-        <p>🌟 **オススメの理由：**<br>
-        ${selectedArea !== "こだわらない" ? `${selectedArea}エリアで、` : ''}あなたが希望された「${selectedType}系」の保育と、「${selectedPriority}」を大切にできる環境がバッチリ揃っています！${finalSelection.desc}</p>
-        
-        <p style="font-weight: bold; text-align: center; color: #ff4757; margin-top: 20px;">👉 学生さんへ：<br>
-        「ぜひブースに行ってみて、戻ってきたら感想を教えてね♪」</p>
-    `;
+    resultArea.innerHTML = `🎯 **あなたと相性のいい園はこちら！**
+-----------------------------------------
+【ブース No.${finalSelection.no}】 ${finalSelection.name}
+-----------------------------------------
+🌟 **オススメの理由：**
+${selectedArea !== "こだわらない" ? `${selectedArea}エリアで、` : ''}あなたが希望された「${selectedType}系」の保育と、「${selectedPriority}」を大切にできる環境がバッチリ揃っています！${finalSelection.desc}
+
+👉 **学生さんへ：**
+「ぜひブースに行ってみて、戻ってきたら感想を教えてね♪」`;
 
     resultArea.scrollIntoView({ behavior: 'smooth' });
 }
