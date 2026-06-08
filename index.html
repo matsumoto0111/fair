@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ほいコレ就職フェア | ぴったり園診断（スプレッドシート連動Ver）</title>
+    <title>ほいコレ就職フェア | ぴったり園診断（マスター自動同期Ver）</title>
     <style>
         :root {
             --primary-color: #ff9a9e;
@@ -151,29 +151,20 @@
         <img src="logo.png" alt="ほいコレ就職フェア" class="logo-img" onclick="countTap()">
     </div>
     <h2>ぴったり園診断</h2>
-    <div class="subtitle">大阪市エリア / 27卒学生向け</div>
+    <div class="subtitle">出展園マッチングシステム / 27卒向け</div>
     <div id="loading-status" class="loading-text">データ読み込み中...</div>
 
     <div class="question-block">
         <label>① 希望エリアは？</label>
         <select id="area">
-            <option value="北部">北部（北・都島・福島・此花・西淀川・淀川・東淀川区）</option>
-            <option value="中央・西部">中央・西部（中央・西・港・大正・浪速区）</option>
-            <option value="東部">東部（城東・鶴見・旭・東成・生野区）</option>
-            <option value="南部">南部（天王寺・阿倍野・住之江・住吉・東住吉・平野・西成区）</option>
-            <option value="こだわらない">こだわらない（大阪市内どこでもOK！）</option>
+            <option value="こだわらない">読み込み中...</option>
         </select>
     </div>
 
     <div class="question-block">
         <label>② 通いやすい沿線は？</label>
         <select id="line">
-            <option value="御堂筋線">Osaka Metro 御堂筋線</option>
-            <option value="谷町線・四つ橋線・堺筋線">Osaka Metro 谷町線・四つ橋線・堺筋線</option>
-            <option value="中央線・長堀鶴見緑地線">Osaka Metro 中央線・長堀鶴見緑地線</option>
-            <option value="JR大阪環状線">JR 大阪環状線・その他JR線</option>
-            <option value="私鉄各線">私鉄各線（阪急・阪神・京阪・近鉄・南海）</option>
-            <option value="こだわらない">こだわらない（どの沿線でもOK！）</option>
+            <option value="こだわらない">読み込み中...</option>
         </select>
     </div>
 
@@ -208,7 +199,7 @@
 </div>
 
 <script>
-// ⚠️ 【重要】ここにGASで作成した「ウェブアプリのURL」を貼り付けてください
+// ⚠️ 【重要】ここにGASで作成した「ウェブアプリのURL」を1行で貼り付けてください
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyD33abMS80WWmrACn29JTNSowqtXNubnynldqsKbpTWoga57uu9VqeFmtwt3yF0Xmdsw/exec";
 
 let booths = [];
@@ -217,7 +208,7 @@ let lastSelectedNo = null;
 
 // 起動時にスプレッドシートから園のデータを取得する
 window.addEventListener('DOMContentLoaded', () => {
-    if(GAS_API_URL.includes("ここにGAS")) {
+    if(GAS_API_URL.includes("XXXXX")) {
         document.getElementById('loading-status').innerText = "⚠️ API URLが設定されていません。";
         return;
     }
@@ -226,6 +217,32 @@ window.addEventListener('DOMContentLoaded', () => {
         .then(response => response.json())
         .then(data => {
             booths = data;
+            
+            // 🌟 スプレッドシートのデータからエリアと沿線のリストを自動で抽出（重複カット）
+            const areaSet = new Set();
+            const lineSet = new Set();
+            
+            booths.forEach(b => {
+                if(b.area) areaSet.add(b.area.trim());
+                if(b.line) lineSet.add(b.line.trim());
+            });
+
+            // 🌟 ①エリアのプルダウンを動的に書き換え
+            const areaSelect = document.getElementById('area');
+            areaSelect.innerHTML = "";
+            areaSet.forEach(areaName => {
+                areaSelect.innerHTML += `<option value="${areaName}">${areaName}</option>`;
+            });
+            areaSelect.innerHTML += `<option value="こだわらない">こだわらない（どこでもOK！）</option>`;
+
+            // 🌟 ②沿線のプルダウンを動的に書き換え
+            const lineSelect = document.getElementById('line');
+            lineSelect.innerHTML = "";
+            lineSet.forEach(lineName => {
+                lineSelect.innerHTML += `<option value="${lineName}">${lineName}</option>`;
+            });
+            lineSelect.innerHTML += `<option value="こだわらない">こだわらない（どの沿線でもOK！）</option>`;
+
             // 着座データの初期化と管理パネルの生成
             const grid = document.getElementById('admin-grid');
             grid.innerHTML = "";
@@ -249,7 +266,6 @@ function updateSeat(no, val) {
     const intVal = parseInt(val) || 0;
     seatCounts[no] = intVal;
     
-    // バックグラウンドでスプレッドシートに非同期送信
     fetch(GAS_API_URL, {
         method: "POST",
         mode: "no-cors",
@@ -330,7 +346,7 @@ function runDiagnosis() {
 【ブース No.${finalSelection.no}】 ${finalSelection.name}
 -----------------------------------------
 🌟 **オススメの理由：**
-${selectedArea !== "こだわらない" ? `大阪市${selectedArea}エリア・` : ''}${selectedLine !== "こだわらない" ? `${selectedLine}沿線で、` : ''}あなたが希望された「${selectedType}系」の保育と、「${selectedPriority}」を大切にできる環境がバッチリ揃っています！${finalSelection.desc}
+${selectedArea !== "こだわらない" ? `${selectedArea}・` : ''}${selectedLine !== "こだわらない" ? `${selectedLine}沿線で、` : ''}あなたが希望された「${selectedType}系」の保育と、「${selectedPriority}」を大切にできる環境がバッチリ揃っています！${finalSelection.desc}
 
 👉 **学生さんへ：**
 「ぜひブースに行ってみて、戻ってきたら感想を教えてね♪」`;
