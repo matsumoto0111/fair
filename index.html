@@ -30,12 +30,19 @@
             width: 100%;
             max-width: 500px;
             box-sizing: border-box;
+            position: relative;
         }
         h1 {
             text-align: center;
             color: var(--accent-color);
             font-size: 24px;
             margin-bottom: 10px;
+            user-select: none;
+        }
+        /* 隠しスイッチ用スタイリング */
+        .secret-trigger {
+            cursor: default;
+            display: inline-block;
         }
         .subtitle {
             text-align: center;
@@ -92,44 +99,42 @@
             border: 2px dashed var(--accent-color);
             display: none;
         }
+        /* 完全に隠された管理者パネル */
         .admin-section {
-            margin-top: 40px;
-            border-top: 1px solid #eee;
+            margin-top: 30px;
+            border-top: 2px dashed #eee;
             padding-top: 15px;
-        }
-        .admin-toggle {
-            text-align: center;
-            font-size: 12px;
-            color: #aaa;
-            cursor: pointer;
-            text-decoration: underline;
+            display: none; /* 初期状態は非表示 */
         }
         .admin-panel {
-            display: none;
-            max-height: 200px;
+            max-height: 250px;
             overflow-y: auto;
-            margin-top: 10px;
             font-size: 12px;
-            background: #f9f9f9;
-            padding: 10px;
-            border-radius: 5px;
+            background: #f1f2f6;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #ced6e0;
         }
         .admin-grid {
             display: grid;
             grid-template-columns: 1fr auto;
-            gap: 5px;
+            gap: 8px;
             align-items: center;
         }
         .admin-grid input {
-            width: 50px;
-            padding: 2px;
+            width: 60px;
+            padding: 4px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>ほいコレ就職フェア<br>🌟 ぴったり園診断 🌟</h1>
+    <!-- タイマの星マークが隠しスイッチになります -->
+    <h1>ほいコレ就職フェア<br><span class="secret-trigger" onclick="countTap()">🌟</span> ぴったり園診断 <span class="secret-trigger" onclick="countTap()">🌟</span></h1>
     <div class="subtitle">堺泉州エリア / 27卒学生向け</div>
 
     <!-- 質問フォーム -->
@@ -165,19 +170,16 @@
     <!-- 出力フォーマットエリア -->
     <div id="result-area"></div>
 
-    <!-- 管理者用裏データ設定 -->
-    <div class="admin-section">
-        <div class="admin-toggle" onclick="toggleAdmin()">⚙️ 管理者用設定
-</div>
-        <div class="admin-panel" id="admin-panel">
-            <p style="margin:0 0 10px 0; font-weight:bold; color:#666;">数値設定</p>
+    <!-- 隠し設定パネル（通常は見えません） -->
+    <div class="admin-section" id="admin-section">
+        <div class="admin-panel">
+            <p style="margin:0 0 10px 0; font-weight:bold; color:#2f3542; font-size:13px;">📊 数値設定（スタッフ用）</p>
             <div class="admin-grid" id="admin-grid"></div>
         </div>
     </div>
 </div>
 
 <script>
-// 18園のマスターデータ（事前下調べに基づく特徴付け）
 const booths = [
     { no: 1, name: "西保育園", area: "堺市", type: "のびのび", priority: "人間関係", desc: "アットホームな環境で先輩たちのフォローが手厚く、人間関係の良さが自慢の園です！" },
     { no: 2, name: "アトム共同保育園", area: "堺市", type: "小規模", priority: "人間関係", desc: "地域密着で子どもたち一人ひとりに寄り添い、笑顔があふれる温かい職場環境です。" },
@@ -199,16 +201,11 @@ const booths = [
     { no: 18, name: "取石南こども園", area: "泉州", type: "小規模", priority: "お休み", desc: "アットホームな小規模保育でお休みも取りやすく、長く働き続けられる環境が整っています。" }
 ];
 
-// 初期着座数の設定（すべて0人でスタート）
 let seatCounts = {};
-booths.forEach(b => {
-    seatCounts[b.no] = 0; 
-});
-
-// 直前に案内したブースのNoを記憶する（連続被り防止）
+booths.forEach(b => { seatCounts[b.no] = 0; });
 let lastSelectedNo = null;
 
-// 管理者パネルの生成
+// パネル生成
 const grid = document.getElementById('admin-grid');
 booths.forEach(b => {
     grid.innerHTML += `
@@ -221,9 +218,26 @@ function updateSeat(no, val) {
     seatCounts[no] = parseInt(val) || 0;
 }
 
-function toggleAdmin() {
-    const panel = document.getElementById('admin-panel');
-    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+// 🤫 隠しコマンド処理（3回タップで出現/消滅）
+let tapCount = 0;
+let tapTimeout;
+function countTap() {
+    tapCount++;
+    clearTimeout(tapTimeout);
+    
+    // 1秒間タップが途切れたらカウントリセット
+    tapTimeout = setTimeout(() => { tapCount = 0; }, 1000);
+    
+    if (tapCount === 3) {
+        const section = document.getElementById('admin-section');
+        if (section.style.display === 'block') {
+            section.style.display = 'none';
+        } else {
+            section.style.display = 'block';
+            section.scrollIntoView({ behavior: 'smooth' });
+        }
+        tapCount = 0;
+    }
 }
 
 // 診断ロジック
@@ -232,43 +246,30 @@ function runDiagnosis() {
     const selectedType = document.getElementById('type').value;
     const selectedPriority = document.getElementById('priority').value;
 
-    // 1. 条件でフィルタリング
     let filtered = booths.filter(b => {
         const areaMatch = (selectedArea === "こだわらない" || b.area === selectedArea);
-        const typeMatch = (b.type === selectedType);
-        const priorityMatch = (b.priority === selectedPriority);
-        return areaMatch && typeMatch && priorityMatch;
+        return areaMatch && (b.type === selectedType) && (b.priority === selectedPriority);
     });
 
-    // もし条件に1つも合致しない場合は、エリア重視で少し条件を緩めて再検索
     if (filtered.length === 0) {
-        filtered = booths.filter(b => {
-            return selectedArea === "こだわらない" || b.area === selectedArea;
-        });
+        filtered = booths.filter(b => selectedArea === "こだわらない" || b.area === selectedArea);
     }
 
-    // 2. フィルタリングされた中から「現在着座数が最も少ない数」を見つける
     let minSeat = Infinity;
     filtered.forEach(b => {
-        if (seatCounts[b.no] < minSeat) {
-            minSeat = seatCounts[b.no];
-        }
+        if (seatCounts[b.no] < minSeat) minSeat = seatCounts[b.no];
     });
 
-    // 3. 最少着座数を持つ園だけに絞り込む（＝今ガラガラのブース）
     let candidates = filtered.filter(b => seatCounts[b.no] === minSeat);
 
-    // 4. 候補が複数ある場合、直前に選ばれた園とは違うものを優先（連続被り防止）
     if (candidates.length > 1 && lastSelectedNo !== null) {
         const sansLast = candidates.filter(b => b.no !== lastSelectedNo);
         if (sansLast.length > 0) candidates = sansLast;
     }
 
-    // 5. 最終候補からランダムで1つ選出
     const finalSelection = candidates[Math.floor(Math.random() * candidates.length)];
     lastSelectedNo = finalSelection.no;
 
-    // 出力フォーマットに落とし込む
     const resultArea = document.getElementById('result-area');
     resultArea.style.display = 'block';
     resultArea.innerHTML = `
@@ -285,7 +286,6 @@ function runDiagnosis() {
         「ぜひブースに行ってみて、戻ってきたら感想を教えてね♪」</p>
     `;
 
-    // 画面を結果位置までスムーズスクロール
     resultArea.scrollIntoView({ behavior: 'smooth' });
 }
 </script>
