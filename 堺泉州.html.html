@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ほいコレ就職フェア | ぴったり園診断</title>
+    <style>
+        :root {
+            --primary-color: #ff9a9e;
+            --secondary-color: #fecfef;
+            --text-color: #4a4a4a;
+            --accent-color: #ff6b8b;
+        }
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background-color: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+        }
+        h1 {
+            text-align: center;
+            color: var(--accent-color);
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 14px;
+            color: #777;
+            margin-bottom: 25px;
+        }
+        .question-block {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #f0f0f0;
+            border-radius: 10px;
+            font-size: 15px;
+            color: var(--text-color);
+            outline: none;
+            transition: border-color 0.3s;
+            background-color: #fafafa;
+        }
+        select:focus {
+            border-color: var(--accent-color);
+        }
+        button.diagnose-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(to right, #ff6b8b, #ff8e53);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 107, 139, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 15px;
+        }
+        button.diagnose-btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 5px rgba(255, 107, 139, 0.4);
+        }
+        #result-area {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 15px;
+            background-color: #fff0f2;
+            border: 2px dashed var(--accent-color);
+            display: none;
+        }
+        .admin-section {
+            margin-top: 40px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        .admin-toggle {
+            text-align: center;
+            font-size: 12px;
+            color: #aaa;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .admin-panel {
+            display: none;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            font-size: 12px;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .admin-grid {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 5px;
+            align-items: center;
+        }
+        .admin-grid input {
+            width: 50px;
+            padding: 2px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>ほいコレ就職フェア<br>🌟 ぴったり園診断 🌟</h1>
+    <div class="subtitle">堺泉州エリア / 27卒学生向け</div>
+
+    <!-- 質問フォーム -->
+    <div class="question-block">
+        <label>① 希望エリアは？</label>
+        <select id="area">
+            <option value="堺市">堺市エリア</option>
+            <option value="泉州">泉州エリア</option>
+            <option value="こだわらない">こだわらない（どちらでもOK！）</option>
+        </select>
+    </div>
+
+    <div class="question-block">
+        <label>② どんなタイプの園がいい？</label>
+        <select id="type">
+            <option value="のびのび">のびのび系（元気に遊びたい）</option>
+            <option value="お勉強">お勉強・教育系（学びもしっかり）</option>
+            <option value="小規模">小規模・アットホーム系（じっくり関わりたい）</option>
+        </select>
+    </div>
+
+    <div class="question-block">
+        <label>③ 一番重視することは？</label>
+        <select id="priority">
+            <option value="人間関係">人間関係・職場の雰囲気</option>
+            <option value="お休み">お休み・プライベートの充実</option>
+            <option value="研修">研修・サポート体制の充実</option>
+        </select>
+    </div>
+
+    <button class="diagnose-btn" onclick="runDiagnosis()">あなたにぴったりの園を見つける！</button>
+
+    <!-- 出力フォーマットエリア -->
+    <div id="result-area"></div>
+
+    <!-- 管理者用裏データ設定 -->
+    <div class="admin-section">
+        <div class="admin-toggle" onclick="toggleAdmin()">⚙️ 管理者用設定
+</div>
+        <div class="admin-panel" id="admin-panel">
+            <p style="margin:0 0 10px 0; font-weight:bold; color:#666;">リアルタイム着座数設定（少ないブースが優先されます）</p>
+            <div class="admin-grid" id="admin-grid"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 18園のマスターデータ（事前下調べに基づく特徴付け）
+const booths = [
+    { no: 1, name: "西保育園", area: "堺市", type: "のびのび", priority: "人間関係", desc: "アットホームな環境で先輩たちのフォローが手厚く、人間関係の良さが自慢の園です！" },
+    { no: 2, name: "アトム共同保育園", area: "堺市", type: "小規模", priority: "人間関係", desc: "地域密着で子どもたち一人ひとりに寄り添い、笑顔があふれる温かい職場環境です。" },
+    { no: 3, name: "認定こども園 ひばり幼稚園", area: "堺市", type: "お勉強", priority: "研修", desc: "独自のカリキュラムが充実しており、新卒向けの研修制度もばっちり整っています！" },
+    { no: 4, name: "陶器北こども園", area: "堺市", type: "のびのび", priority: "お休み", desc: "広い園庭で子どもたちがのびのび育ち、ワークライフバランス重視でお休みもしっかり取れます。" },
+    { no: 5, name: "幼保連携型認定こども園 東百舌鳥保育園", area: "堺市", type: "のびのび", priority: "研修", desc: "元気いっぱいの保育が特徴！サポート体制が手厚く、一歩ずつ保育士として成長できます。" },
+    { no: 6, name: "認定こども園 鈴ノ宮保育園", area: "堺市", type: "お勉強", priority: "人間関係", desc: "日本の伝統や学びを大切にする園。職員同士のチームワークが良く、何でも相談しやすい雰囲気です。" },
+    { no: 7, name: "まつのみこども園", area: "堺市", type: "小規模", priority: "お休み", desc: "プライベートの時間も大切にできる環境で、ゆとりを持って子どもたちと向き合えます。" },
+    { no: 8, name: "幼保連携型認定こども園 菩提幼稚園", area: "堺市", type: "お勉強", priority: "お休み", desc: "メリハリのある教育環境が魅力で、年間休日が多くしっかりとリフレッシュできる職場です。" },
+    { no: 9, name: "幼保連携型認定こども園 わんぱく保育園", area: "堺市", type: "のびのび", priority: "人間関係", desc: "名前の通りわんぱくに遊ぶ園！明るく気さくな先生ばかりで、すぐに馴染めますよ。" },
+    { no: 10, name: "幼保連携型認定こども園 あかつき保育園", area: "堺市", type: "のびのび", priority: "研修", desc: "豊かな自然に囲まれた園。新卒向けの丁寧なOJTがあり、安心して現場デビューできます。" },
+    { no: 11, name: "認定こども園 せいこう幼稚園", area: "堺市", type: "お勉強", priority: "研修", desc: "知育・体育に力を入れる活気ある園！スキルアップのための研修やカリキュラムが満載です。" },
+    { no: 12, name: "おおとりの森こども園", area: "堺市", type: "小規模", priority: "人間関係", desc: "木の温もりに包まれた園舎で、お互いを思いやる最高の人間関係が築かれています。" },
+    { no: 13, name: "信達こども園", area: "泉州", type: "のびのび", priority: "人間関係", desc: "泉州の豊かな環境のなか、のびのび保育を実践！先生たちの仲の良さも抜群です。" },
+    { no: 14, name: "なかもずこども園", area: "堺市", type: "小規模", priority: "研修", desc: "少人数ならではの手厚い保育。園内研修が充実しており、じっくり保育を学びたい方に最適です。" },
+    { no: 15, name: "幼保連携型認定こども園 堺めぐみ学園", area: "堺市", type: "お勉強", priority: "人間関係", desc: "幼児教育に定評あり！先輩たちが優しく教えてくれるので、安心して挑戦できる環境です。" },
+    { no: 16, name: "サン子ども園", area: "泉州", type: "のびのび", priority: "お休み", desc: "太陽のように明るい園。持ち帰り残業ゼロを掲げ、プライベートも100%楽しめます！" },
+    { no: 17, name: "幼稚園型認定こども園 新ひのお台幼稚園", area: "堺市", type: "お勉強", priority: "お休み", desc: "充実した教育環境と、お休みがしっかり取れる好待遇が両立している大人気の園です。" },
+    { no: 18, name: "取石南こども園", area: "泉州", type: "小規模", priority: "お休み", desc: "アットホームな小規模保育でお休みも取りやすく、長く働き続けられる環境が整っています。" }
+];
+
+// 初期着座数の設定（すべて0人でスタート）
+let seatCounts = {};
+booths.forEach(b => {
+    seatCounts[b.no] = 0; 
+});
+
+// 直前に案内したブースのNoを記憶する（連続被り防止）
+let lastSelectedNo = null;
+
+// 管理者パネルの生成
+const grid = document.getElementById('admin-grid');
+booths.forEach(b => {
+    grid.innerHTML += `
+        <div>【ブース${b.no}】 ${b.name}</div>
+        <div><input type="number" id="seat-${b.no}" value="0" min="0" onchange="updateSeat(${b.no}, this.value)"> 人</div>
+    `;
+});
+
+function updateSeat(no, val) {
+    seatCounts[no] = parseInt(val) || 0;
+}
+
+function toggleAdmin() {
+    const panel = document.getElementById('admin-panel');
+    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+}
+
+// 診断ロジック
+function runDiagnosis() {
+    const selectedArea = document.getElementById('area').value;
+    const selectedType = document.getElementById('type').value;
+    const selectedPriority = document.getElementById('priority').value;
+
+    // 1. 条件でフィルタリング
+    let filtered = booths.filter(b => {
+        const areaMatch = (selectedArea === "こだわらない" || b.area === selectedArea);
+        const typeMatch = (b.type === selectedType);
+        const priorityMatch = (b.priority === selectedPriority);
+        return areaMatch && typeMatch && priorityMatch;
+    });
+
+    // もし条件に1つも合致しない場合は、エリア重視で少し条件を緩めて再検索
+    if (filtered.length === 0) {
+        filtered = booths.filter(b => {
+            return selectedArea === "こだわらない" || b.area === selectedArea;
+        });
+    }
+
+    // 2. フィルタリングされた中から「現在着座数が最も少ない数」を見つける
+    let minSeat = Infinity;
+    filtered.forEach(b => {
+        if (seatCounts[b.no] < minSeat) {
+            minSeat = seatCounts[b.no];
+        }
+    });
+
+    // 3. 最少着座数を持つ園だけに絞り込む（＝今ガラガラのブース）
+    let candidates = filtered.filter(b => seatCounts[b.no] === minSeat);
+
+    // 4. 候補が複数ある場合、直前に選ばれた園とは違うものを優先（連続被り防止）
+    if (candidates.length > 1 && lastSelectedNo !== null) {
+        const sansLast = candidates.filter(b => b.no !== lastSelectedNo);
+        if (sansLast.length > 0) candidates = sansLast;
+    }
+
+    // 5. 最終候補からランダムで1つ選出
+    const finalSelection = candidates[Math.floor(Math.random() * candidates.length)];
+    lastSelectedNo = finalSelection.no;
+
+    // 出力フォーマットに落とし込む
+    const resultArea = document.getElementById('result-area');
+    resultArea.style.display = 'block';
+    resultArea.innerHTML = `
+        <h3 style="text-align:center; margin-top:0; color:var(--accent-color);">🎯 あなたと相性のいい園はこちら！</h3>
+        <hr style="border: 1px solid var(--accent-color); margin: 15px 0;">
+        <div style="font-size: 18px; font-weight: bold; text-align: center; margin: 15px 0; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            【ブース No.${finalSelection.no}】<br>${finalSelection.name}
+        </div>
+        <hr style="border: 1px solid var(--accent-color); margin: 15px 0;">
+        <p>🌟 **オススメの理由：**<br>
+        ${selectedArea !== "こだわらない" ? `${selectedArea}エリアで、` : ''}あなたが希望された「${selectedType}系」の保育と、「${selectedPriority}」を大切にできる環境がバッチリ揃っています！${finalSelection.desc}</p>
+        
+        <p style="font-weight: bold; text-align: center; color: #ff4757; margin-top: 20px;">👉 学生さんへ：<br>
+        「ぜひブースに行ってみて、戻ってきたら感想を教えてね♪」</p>
+    `;
+
+    // 画面を結果位置までスムーズスクロール
+    resultArea.scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+
+</body>
+</html>
